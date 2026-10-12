@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BRACU Cover Generator – Assignment Cover Pages</title>
+<meta name="description" content="Create BRAC University assignment and lab report cover pages and download them as PDF.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1114;
+    --panel: #171a1f;
+    --panel-2: #1e2229;
+    --line: #2a2f38;
+    --text: #e8eaee;
+    --muted: #8b93a1;
+    --accent: #3b82f6;
+    --accent-2: #60a5fa;
+    /* cover page colours - change here to restyle the PDF */
+    --brand: #1a3a7a;
+    --gold: #b8892b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  .app { display: grid; grid-template-columns: 390px 1fr; height: 100vh; }
+  .sidebar { overflow-y: auto; padding: 20px; border-right: 1px solid var(--line); }
+  .stage { overflow: auto; padding: 24px; background: #0b0d10; display: flex; flex-direction: column; align-items: center; }
+
+  header.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .logo-mark { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg,#0ea5e9,#2563eb); display: grid; place-items: center; font-weight: 700; }
+  header.brand h1 { font-size: 18px; }
+  header.brand p { font-size: 12px; color: var(--muted); }
+
+  .actions { display: flex; gap: 8px; margin-bottom: 16px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 10px 14px; font-weight: 600; }
+  button:hover { border-color: #3a4150; }
+  button.primary { background: var(--accent); border-color: var(--accent); flex: 1; color: #fff; }
+  button.primary:hover { background: #2f6fe0; }
+  button.small { padding: 6px 10px; font-size: 12px; }
+  button:disabled { opacity: .6; cursor: wait; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+
+  fieldset { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  legend { padding: 0 8px; font-size: 12px; font-weight: 700; color: var(--accent-2); }
+  label { display: block; font-size: 11.5px; font-weight: 600; color: var(--muted); margin: 10px 0 4px; }
+  input, select, textarea { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+  textarea { resize: vertical; min-height: 60px; }
+  input[type=date] { color-scheme: dark; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+  .member { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 8px; align-items: center; }
+  .member button { padding: 8px 10px; }
+
+  .stage-title { align-self: stretch; display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+
+  /* ---------- cover page (A4 @96dpi = 794 x 1123) ---------- */
+  .page-wrap { transform-origin: top left; }
+  .page {
+    width: 794px; height: 1123px; background: #fff; color: #111;
+    position: relative; padding: 60px 68px 56px; display: flex; flex-direction: column;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+  }
+  .page .frame { position: absolute; inset: 26px; border: 2px solid var(--brand); pointer-events: none; }
+  .page .frame::after { content: ''; position: absolute; inset: 6px; border: 0.75px solid var(--brand); }
+
+  .p-head { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 16px; }
+  .p-logo { max-height: 120px; max-width: 320px; object-fit: contain; }
+  .p-uni { font-size: 30px; font-weight: 700; color: var(--brand); letter-spacing: .5px; }
+  .p-rule { width: 100%; height: 2px; background: var(--brand); margin-top: 22px; }
+
+  .p-title { text-align: center; margin-top: 76px; }
+  .p-type { font-size: 44px; font-weight: 700; letter-spacing: 6px; text-transform: uppercase; color: var(--brand); }
+  .p-type-rule { width: 70px; height: 3px; background: var(--gold); margin: 18px auto 0; }
+
+  .p-course { text-align: center; margin-top: 48px; }
+  .p-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; }
+  .p-course .code { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1.5px; color: var(--gold); margin-bottom: 6px; }
+  .p-course .name { font-size: 24px; font-weight: 700; color: #111; line-height: 1.35; }
+  .p-course .sec { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #444; margin-top: 8px; }
+  .p-topic { margin-top: 18px; font-size: 17px; font-style: italic; color: #333; max-width: 560px; margin-inline: auto; line-height: 1.5; }
+
+  .p-people { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: auto; margin-bottom: 56px; }
+  .p-box { border-top: 2px solid var(--brand); padding-top: 14px; }
+  .p-box .big { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: #111; }
+  .p-box .line { font-size: 13.5px; line-height: 1.7; color: #333; }
+  .p-box .line b { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 11.5px; color: #6b7280; margin-right: 4px; }
+  .p-member { margin-bottom: 10px; }
+  .p-member .big { margin-bottom: 1px; }
+
+  .p-foot { display: flex; justify-content: center; align-items: baseline; gap: 10px; margin-bottom: 14px; font-size: 14px; }
+  .p-foot .lbl { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #6b7280; }
+  .p-foot .val { min-width: 170px; text-align: center; border-bottom: 1px solid #111; padding-bottom: 2px; min-height: 20px; }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 960px) {
+    .app { grid-template-columns: 1fr; height: auto; }
+    .sidebar { border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
+    .stage { overflow: hidden; padding: 16px 0; align-items: flex-start; padding-left: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ================= FORM ================= -->
+  <aside class="sidebar">
+    <header class="brand">
+      <div class="logo-mark">C</div>
+      <div>
+        <h1>BRACU Cover Generator</h1>
+        <p>Assignment &amp; lab report cover pages</p>
+      </div>
+    </header>
+
+    <div class="actions">
+      <button id="resetBtn" type="button">Reset</button>
+      <button id="downloadBtn" type="button" class="primary">Download PDF</button>
+    </div>
+
+    <fieldset>
+      <legend>Document details</legend>
+      <label for="preset">Quick preset</label>
+      <select id="preset">
+        <option>Assignment</option>
+        <option>Lab Report</option>
+        <option>Project Report</option>
+        <option>Case Study</option>
+        <option>Term Paper</option>
+        <option value="custom">Custom…</option>
+      </select>
+
+      <label for="docType">Document type</label>
+      <input id="docType" value="Assignment">
+
+      <div class="row">
+        <div><label for="courseCode">Course code</label><input id="courseCode" placeholder="CSE110"></div>
+        <div><label for="section">Section</label><input id="section" placeholder="05"></div>
+      </div>
+
+      <label for="courseName">Course title</label>
+      <input id="courseName" placeholder="Programming Language I">
+
+      <label for="topic">Topic / title</label>
+      <textarea id="topic" placeholder="Optional"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>Submitted to</legend>
+      <label for="instName">Faculty name</label>
+      <input id="instName" placeholder="Faculty name">
+      <label for="instTitle">Designation</label>
+      <input id="instTitle" placeholder="Lecturer">
+      <label for="dept">Department</label>
+      <input id="dept" placeholder="Department of Computer Science and Engineering">
+    </fieldset>
+
+    <fieldset>
+      <legend>Submitted by</legend>
+      <div id="members"></div>
+      <button id="addMember" type="button" class="small" style="margin-top:10px">+ Add group member</button>
+      <p class="hint">One member = individual submission. Add more for group work.</p>
+
+      <label for="semester">Semester</label>
+      <input id="semester" placeholder="Fall 2026">
+
+      <label for="date">Submission date</label>
+      <input id="date" type="date">
+      <p class="hint">Leave empty to print a blank line to fill by hand.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>University</legend>
+      <label for="uni">University name</label>
+      <input id="uni" value="BRAC University">
+      <label for="logo">Logo</label>
+      <input id="logo" type="file" accept="image/*">
+      <p class="hint">Easiest: add your logo file named <b>logo.png</b> next to index.html in the GitHub repo and it loads automatically. Or upload it here for this browser only.</p>
+    </fieldset>
+  </aside>
+
+  <!-- ================= PREVIEW ================= -->
+  <main class="stage" id="stage">
+    <div class="stage-title"><span>Live preview (A4)</span><span id="zoomLabel"></span></div>
+    <div class="page-wrap" id="pageWrap">
+      <div class="page" id="page">
+        <div class="frame"></div>
+
+        <div class="p-head">
+          <img id="pLogo" class="p-logo hidden" alt="University logo">
+          <div class="p-uni" id="pUni"></div>
+          <div class="p-rule"></div>
+        </div>
+
+        <div class="p-title">
+          <div class="p-type" id="pType"></div>
+          <div class="p-type-rule"></div>
+        </div>
+
+        <div class="p-course">
+          <div class="code hidden" id="pCode"></div>
+          <div class="name" id="pCourse"></div>
+          <div class="sec hidden" id="pSec"></div>
+          <div class="p-topic hidden" id="pTopic"></div>
+        </div>
+
+        <div class="p-people">
+          <div class="p-box">
+            <div class="p-label">Submitted to</div>
+            <div class="big" id="pInstName"></div>
+            <div class="line" id="pInstTitle"></div>
+            <div class="line" id="pDept"></div>
+          </div>
+          <div class="p-box">
+            <div class="p-label">Submitted by</div>
+            <div id="pMembers"></div>
+            <div class="line" id="pSemester"></div>
+          </div>
+        </div>
+
+        <div class="p-foot">
+          <span class="lbl">Date of submission</span>
+          <span class="val" id="pDate"></span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  const FIELDS = ['docType','courseCode','section','courseName','topic','instName','instTitle','dept','semester','date','uni'];
+  const DEFAULTS = {
+    docType: 'Assignment', courseCode: '', section: '', courseName: '', topic: '',
+    instName: '', instTitle: '', dept: 'Department of Computer Science and Engineering',
+    semester: '', date: '', uni: 'BRAC University'
+  };
+  const PRESETS = ['Assignment','Lab Report','Project Report','Case Study','Term Paper'];
+  const STORE_KEY = 'bracu-cover-v1';
+
+  let members = [{ name: '', id: '' }];
+  let uploadedLogo = '';      // user-uploaded logo (stored in browser)
+  let repoLogoOk = false;     // true when /logo.png exists in the repo
+
+  /* ---------- storage ---------- */
+  function save() {
+    try {
+      const data = { members, logo: uploadedLogo };
+      FIELDS.forEach(f => data[f] = $(f).value);
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+  function load() {
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) {}
+    const src = data || DEFAULTS;
+    FIELDS.forEach(f => $(f).value = src[f] ?? DEFAULTS[f]);
+    members = (data && Array.isArray(data.members) && data.members.length) ? data.members : [{ name: '', id: '' }];
+    uploadedLogo = (data && data.logo) || '';
+    $('preset').value = PRESETS.includes($('docType').value) ? $('docType').value : 'custom';
+  }
+
+  /* ---------- helpers ---------- */
+  function setText(id, text, label) {
+    const el = $(id);
+    if (!text) { el.textContent = ''; el.classList.add('hidden'); return; }
+    el.classList.remove('hidden');
+    if (label) {
+      el.textContent = '';
+      const b = document.createElement('b'); b.textContent = label;
+      el.appendChild(b); el.appendChild(document.createTextNode(text));
+    } else el.textContent = text;
+  }
+  function formatDate(v) {
+    if (!v) return '';
+    return new Date(v + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  /* ---------- members UI ---------- */
+  function renderMemberInputs() {
+    const box = $('members');
+    box.innerHTML = '';
+    members.forEach((m, i) => {
+      const row = document.createElement('div');
+      row.className = 'member';
+      const n = document.createElement('input'); n.placeholder = 'Name'; n.value = m.name; n.setAttribute('aria-label', 'Student name ' + (i + 1));
+      const d = document.createElement('input'); d.placeholder = 'Student ID'; d.value = m.id; d.setAttribute('aria-label', 'Student ID ' + (i + 1));
+      n.addEventListener('input', () => { members[i].name = n.value; render(); });
+      d.addEventListener('input', () => { members[i].id = d.value; render(); });
+      row.append(n, d);
+      if (members.length > 1) {
+        const x = document.createElement('button');
+        x.type = 'button'; x.textContent = '×'; x.title = 'Remove'; x.setAttribute('aria-label', 'Remove member ' + (i + 1));
+        x.addEventListener('click', () => { members.splice(i, 1); renderMemberInputs(); render(); });
+        row.appendChild(x);
+      }
+      box.appendChild(row);
+    });
+  }
+
+  /* ---------- render preview ---------- */
+  function render() {
+    $('pType').textContent = ($('docType').value || 'Assignment').toUpperCase();
+    setText('pCode', $('courseCode').value.toUpperCase());
+    $('pCourse').textContent = $('courseName').value || ' ';
+    setText('pSec', $('section').value, 'Section: ');
+    setText('pTopic', $('topic').value);
+    setText('pInstName', $('instName').value);
+    setText('pInstTitle', $('instTitle').value);
+    setText('pDept', $('dept').value);
+    setText('pSemester', $('semester').value, 'Semester: ');
+    $('pDate').textContent = formatDate($('date').value);
+
+    // members
+    const wrap = $('pMembers');
+    wrap.innerHTML = '';
+    members.filter(m => m.name || m.id).forEach(m => {
+      const div = document.createElement('div'); div.className = 'p-member';
+      if (m.name) { const b = document.createElement('div'); b.className = 'big'; b.textContent = m.name; div.appendChild(b); }
+      if (m.id) {
+        const l = document.createElement('div'); l.className = 'line';
+        const bb = document.createElement('b'); bb.textContent = 'Student ID: ';
+        l.append(bb, document.createTextNode(m.id)); div.appendChild(l);
+      }
+      wrap.appendChild(div);
+    });
+
+    // logo: uploaded > repo logo.png > text fallback
+    const logo = $('pLogo'), uni = $('pUni');
+    const src = uploadedLogo || (repoLogoOk ? 'logo.png' : '');
+    if (src) {
+      logo.src = src; logo.classList.remove('hidden');
+      uni.classList.add('hidden');
+    } else {
+      logo.removeAttribute('src'); logo.classList.add('hidden');
+      uni.textContent = $('uni').value; uni.classList.remove('hidden');
+    }
+    save();
+  }
+
+  function checkRepoLogo() {
+    const img = new Image();
+    img.onload = () => { repoLogoOk = true; render(); };
+    img.onerror = () => { repoLogoOk = false; render(); };
+    img.src = 'logo.png?v=' + Date.now();
+  }
+
+  /* ---------- fit preview to screen ---------- */
+  function fit() {
+    const stage = $('stage');
+    const avail = stage.clientWidth - (window.innerWidth <= 960 ? 24 : 48);
+    const scale = Math.min(1, avail / 794);
+    const wrap = $('pageWrap');
+    wrap.style.transform = `scale(${scale})`;
+    wrap.style.width = '794px';
+    wrap.style.height = (1123 * scale) + 'px';
+    if (window.innerWidth > 960) { wrap.style.transformOrigin = 'top center'; }
+    else { wrap.style.transformOrigin = 'top left'; }
+    $('zoomLabel').textContent = Math.round(scale * 100) + '%';
+  }
+
+  /* ---------- events ---------- */
+  FIELDS.forEach(f => $(f).addEventListener('input', render));
+
+  $('preset').addEventListener('change', (e) => {
+    if (e.target.value !== 'custom') $('docType').value = e.target.value; else $('docType').focus();
+    render();
+  });
+  $('docType').addEventListener('input', () => {
+    $('preset').value = PRESETS.includes($('docType').value) ? $('docType').value : 'custom';
+  });
+
+  $('addMember').addEventListener('click', () => {
+    if (members.length >= 6) return;
+    members.push({ name: '', id: '' }); renderMemberInputs(); render();
+  });
+
+  $('logo').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { uploadedLogo = reader.result; render(); };
+    reader.readAsDataURL(file);
+  });
+
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm('Reset all fields?')) return;
+    try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+    uploadedLogo = ''; $('logo').value = '';
+    FIELDS.forEach(f => $(f).value = DEFAULTS[f]);
+    members = [{ name: '', id: '' }];
+    $('preset').value = 'Assignment';
+    renderMemberInputs(); render();
+  });
+
+  $('downloadBtn').addEventListener('click', async () => {
+    const btn = $('downloadBtn');
+    btn.disabled = true; btn.textContent = 'Preparing PDF…';
+    let holder;
+    try {
+      const clone = $('page').cloneNode(true);
+      clone.style.boxShadow = 'none';
+      holder = document.createElement('div');
+      holder.style.cssText = 'position:fixed;left:-10000px;top:0;';
+      holder.appendChild(clone);
+      document.body.appendChild(holder);
+
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      // make sure the logo has finished loading inside the clone
+      const img = clone.querySelector('#pLogo');
+      if (img && !img.classList.contains('hidden') && !img.complete) {
+        await new Promise(r => { img.onload = r; img.onerror = r; });
+      }
+
+      const first = members.find(m => m.id) || members[0];
+      const idPart = ((first && first.id) || 'cover').replace(/[^\w-]+/g, '_');
+      const type = ($('docType').value || 'Assignment').replace(/\s+/g, '_');
+      const code = ($('courseCode').value || '').replace(/\s+/g, '');
+
+      await html2pdf().set({
+        margin: 0,
+        filename: [type, code, idPart].filter(Boolean).join('_') + '.pdf',
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait', hotfixes: ['px_scaling'] }
+      }).from(clone).save();
+    } catch (err) {
+      alert("Could not create the PDF. Try again, or use your browser's Print → Save as PDF.");
+      console.error(err);
+    } finally {
+      if (holder) holder.remove();
+      btn.disabled = false; btn.textContent = 'Download PDF';
+    }
+  });
+
+  window.addEventListener('resize', fit);
+
+  load(); renderMemberInputs(); render(); fit(); checkRepoLogo();
+})();
+</script>
+</body>
+</html>
