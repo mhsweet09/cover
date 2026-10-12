@@ -174,15 +174,6 @@
       <input id="date" type="date">
       <p class="hint">Leave empty to print a blank line to fill by hand.</p>
     </fieldset>
-
-    <fieldset>
-      <legend>University</legend>
-      <label for="uni">University name</label>
-      <input id="uni" value="BRAC University">
-      <label for="logo">Logo</label>
-      <input id="logo" type="file" accept="image/*">
-      <p class="hint">Easiest: add your logo file named <b>logo.png</b> next to index.html in the GitHub repo and it loads automatically. Or upload it here for this browser only.</p>
-    </fieldset>
   </aside>
 
   <!-- ================= PREVIEW ================= -->
@@ -193,7 +184,7 @@
         <div class="frame"></div>
 
         <div class="p-head">
-          <img id="pLogo" class="p-logo hidden" alt="University logo">
+          <img id="pLogo" class="p-logo hidden" alt="BRAC University logo">
           <div class="p-uni" id="pUni"></div>
           <div class="p-rule"></div>
         </div>
@@ -237,23 +228,26 @@
 (function () {
   const $ = (id) => document.getElementById(id);
 
-  const FIELDS = ['docType','courseCode','section','courseName','topic','instName','instTitle','dept','semester','date','uni'];
+  /* ===== FIXED UNIVERSITY SETTINGS (change here only) ===== */
+  const UNI_NAME = 'BRAC University';   // shown when logo.png is missing
+  const LOGO_FILE = 'logo.png';         // logo file placed next to index.html in the repo
+
+  const FIELDS = ['docType','courseCode','section','courseName','topic','instName','instTitle','dept','semester','date'];
   const DEFAULTS = {
     docType: 'Assignment', courseCode: '', section: '', courseName: '', topic: '',
     instName: '', instTitle: '', dept: 'Department of Computer Science and Engineering',
-    semester: '', date: '', uni: 'BRAC University'
+    semester: '', date: ''
   };
   const PRESETS = ['Assignment','Lab Report','Project Report','Case Study','Term Paper'];
-  const STORE_KEY = 'bracu-cover-v1';
+  const STORE_KEY = 'bracu-cover-v2';
 
   let members = [{ name: '', id: '' }];
-  let uploadedLogo = '';      // user-uploaded logo (stored in browser)
-  let repoLogoOk = false;     // true when /logo.png exists in the repo
+  let logoOk = false;   // true when logo.png exists in the repo
 
   /* ---------- storage ---------- */
   function save() {
     try {
-      const data = { members, logo: uploadedLogo };
+      const data = { members };
       FIELDS.forEach(f => data[f] = $(f).value);
       localStorage.setItem(STORE_KEY, JSON.stringify(data));
     } catch (e) {}
@@ -264,7 +258,6 @@
     const src = data || DEFAULTS;
     FIELDS.forEach(f => $(f).value = src[f] ?? DEFAULTS[f]);
     members = (data && Array.isArray(data.members) && data.members.length) ? data.members : [{ name: '', id: '' }];
-    uploadedLogo = (data && data.logo) || '';
     $('preset').value = PRESETS.includes($('docType').value) ? $('docType').value : 'custom';
   }
 
@@ -333,24 +326,23 @@
       wrap.appendChild(div);
     });
 
-    // logo: uploaded > repo logo.png > text fallback
+    // fixed logo: logo.png if it exists, otherwise the university name as text
     const logo = $('pLogo'), uni = $('pUni');
-    const src = uploadedLogo || (repoLogoOk ? 'logo.png' : '');
-    if (src) {
-      logo.src = src; logo.classList.remove('hidden');
+    if (logoOk) {
+      logo.src = LOGO_FILE; logo.classList.remove('hidden');
       uni.classList.add('hidden');
     } else {
       logo.removeAttribute('src'); logo.classList.add('hidden');
-      uni.textContent = $('uni').value; uni.classList.remove('hidden');
+      uni.textContent = UNI_NAME; uni.classList.remove('hidden');
     }
     save();
   }
 
-  function checkRepoLogo() {
+  function checkLogo() {
     const img = new Image();
-    img.onload = () => { repoLogoOk = true; render(); };
-    img.onerror = () => { repoLogoOk = false; render(); };
-    img.src = 'logo.png?v=' + Date.now();
+    img.onload = () => { logoOk = true; render(); };
+    img.onerror = () => { logoOk = false; render(); };
+    img.src = LOGO_FILE + '?v=' + Date.now();
   }
 
   /* ---------- fit preview to screen ---------- */
@@ -362,8 +354,7 @@
     wrap.style.transform = `scale(${scale})`;
     wrap.style.width = '794px';
     wrap.style.height = (1123 * scale) + 'px';
-    if (window.innerWidth > 960) { wrap.style.transformOrigin = 'top center'; }
-    else { wrap.style.transformOrigin = 'top left'; }
+    wrap.style.transformOrigin = window.innerWidth > 960 ? 'top center' : 'top left';
     $('zoomLabel').textContent = Math.round(scale * 100) + '%';
   }
 
@@ -383,18 +374,9 @@
     members.push({ name: '', id: '' }); renderMemberInputs(); render();
   });
 
-  $('logo').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { uploadedLogo = reader.result; render(); };
-    reader.readAsDataURL(file);
-  });
-
   $('resetBtn').addEventListener('click', () => {
     if (!confirm('Reset all fields?')) return;
     try { localStorage.removeItem(STORE_KEY); } catch (e) {}
-    uploadedLogo = ''; $('logo').value = '';
     FIELDS.forEach(f => $(f).value = DEFAULTS[f]);
     members = [{ name: '', id: '' }];
     $('preset').value = 'Assignment';
@@ -443,7 +425,7 @@
 
   window.addEventListener('resize', fit);
 
-  load(); renderMemberInputs(); render(); fit(); checkRepoLogo();
+  load(); renderMemberInputs(); render(); fit(); checkLogo();
 })();
 </script>
 </body>
